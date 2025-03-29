@@ -107,6 +107,29 @@ jobs:
           ref: main # 바꾸기
           path: .
           token: ${{ secrets.GIT_PAT }}
+      - name: Install kubectl
+        run: |
+            KUBECTL_VERSION=$(curl -s https://dl.k8s.io/release/stable.txt)
+            curl -LO "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl"
+            chmod +x kubectl
+            sudo mv kubectl /usr/local/bin/
+      - name: Install AWS CLI
+        run: |
+            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            unzip awscliv2.zip
+            sudo ./aws/install
+          
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+    
+      - name: Update kubeconfig for EKS
+        run: |
+            aws eks update-kubeconfig --region $AWS_REGION --name your-cluster-name istory
+
       - name: 2..env.secret 파일 생성 (k8s-dev for Kustomize)
         run: |
           echo "MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}" >> overlay/aws-dev/.env.secret
@@ -120,22 +143,22 @@ jobs:
       #     # Ensure kustomize is installed
       #     curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"  | bash
       #     # Build the kustomize configuration
-      #     ./kustomize build overlay/aws-dev -o istory-app-deploy.yml
+      #     ./kustomize build overlay/aws-dev -o istory-app-deploy.yaml
 
-      - name: 11.쿠버네티스 매니페스트 파일 이미지 태그 업데이트
-        run: |
-          # 파일이 존재하는지 확인
-          # ls -la
-          # 현재 파일 내용 확인
-          # cat istory-app-deploy.yml
-          git config --global user.name 'github-actions[bot]'
-          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          sed -i "s|newTag:.*|newTag: ${{ env.DOCKER_TAG }}|g" overlay/aws-dev/kustomization.yml
-          git commit -am "Update image tag to ${{ env.DOCKER_TAG }}"
-          git push origin main
-          # sed -i "s|image: ${{ secrets.DOCKER_USERNAME }}\/istory.*|image: ${{ secrets.DOCKER_USERNAME }}\/istory:${{ env.DOCKER_TAG }}|g" istory-app-deploy.yml
-          # 변경된 내용 확인
-          cat overlay/aws-dev/kustomization.yml
+    #   - name: 11.쿠버네티스 매니페스트 파일 이미지 태그 업데이트
+    #     run: |
+    #       # 파일이 존재하는지 확인
+    #       # ls -la
+    #       # 현재 파일 내용 확인
+    #       # cat istory-app-deploy.yaml
+    #       git config --global user.name 'github-actions[bot]'
+    #       git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+    #       sed -i "s|newTag:.*|newTag: ${{ env.DOCKER_TAG }}|g" overlay/aws-dev/kustomization.yaml
+    #       git commit -am "Update image tag to ${{ env.DOCKER_TAG }}"
+    #       git push origin main
+    #       # sed -i "s|image: ${{ secrets.DOCKER_USERNAME }}\/istory.*|image: ${{ secrets.DOCKER_USERNAME }}\/istory:${{ env.DOCKER_TAG }}|g" istory-app-deploy.yaml
+    #       # 변경된 내용 확인
+    #       cat overlay/aws-dev/kustomization.yaml
       
       # 변경사항 커밋 및 푸시
       # - name: 12.서비스 리포지토리 변경사항 커밋 및 푸시
