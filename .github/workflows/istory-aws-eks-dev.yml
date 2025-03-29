@@ -109,10 +109,14 @@ jobs:
           token: ${{ secrets.GIT_PAT }}
       - name: Install kubectl
         run: |
-            KUBECTL_VERSION=$(curl -s https://dl.k8s.io/release/stable.txt)
+            # stable.txt에서 버전 정보를 가져오고 개행 문자를 제거합니다.
+            KUBECTL_VERSION=$(curl -s https://dl.k8s.io/release/stable.txt | tr -d '\n')
+
+            # 버전 문자열을 사용하여 kubectl을 다운로드합니다.
             curl -LO "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl"
             chmod +x kubectl
             sudo mv kubectl /usr/local/bin/
+
       - name: Install AWS CLI
         run: |
             curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
