@@ -94,18 +94,16 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_TOKEN }}
           logout: true
-
       - name: 9.Docker Push
         run: |
           docker push ${{ secrets.DOCKER_USERNAME }}/istory:${{ env.DOCKER_TAG }}
-
-          - name: 10.서비스 리포지토리 체크아웃
-          uses: actions/checkout@v4
-          with:
-            repository: dangtong76/istory-platform   # 바꾸기
-            ref: main # 바꾸기
-            path: .
-            token: ${{ secrets.GIT_PAT }}
+      - name: 10.서비스 리포지토리 체크아웃
+        uses: actions/checkout@v4
+        with:
+          repository: jiseongTak/istory-platform   # 바꾸기
+          ref: main # 바꾸기
+          path: .
+          token: ${{ secrets.GIT_PAT }}
       - name: Install kubectl
         run: |
             curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
@@ -134,9 +132,10 @@ jobs:
         run: |
             curl -s https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh | bash
             sudo mv kustomize /usr/local/bin
-      - name: kustomize update image yaml
-        run: |
-            kustomize edit set image istory=jiseongtak/istory:${{ github.run_number }}
+            - name: kustomize update image yaml
+            run: |
+              cd overlay/aws-dev
+              kustomize edit set image istory=dagntong76/istory:${{ github.run_number }}
       - name: push yaml
         run: |
             git config --global user.name 'github-actions[bot]'
